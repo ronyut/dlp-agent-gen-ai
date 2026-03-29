@@ -30,7 +30,24 @@ python main.py
 
 Runtime settings are in `config.json`.
 
+## Technical Notes
+
+### OS APIs Used
+
+- `SetWindowsHookExW(WH_KEYBOARD_LL)`: captures global keyboard events and allows Ctrl+V detection for paste monitoring.
+- `SetWinEventHook(EVENT_OBJECT_CREATE)`: watches creation of Windows UI objects and detects new Open dialogs.
+- `PumpMessages` with a hidden message-only window (`HWND_MESSAGE`): keeps the process in a native Win32 event loop.
+- `GetForegroundWindow`, `GetWindowText`, `GetWindowThreadProcessId`, `OpenProcess`, `GetModuleFileNameExW`: used to verify the active context is ChatGPT in Chrome before evaluating events.
+
+### File Origin Detection
+
+- For selected files, the agent reads NTFS Alternate Data Stream metadata from `:Zone.Identifier`.
+- It parses `ZoneTransfer/HostUrl` and classifies source by matching the parsed hostname against configured Google Drive origin tokens.
+
 ## Limitations
+
+### General
+- Global hooks plus polling watchers are practical for a prototype but should be further optimized and hardened for production scale.
 
 ### PII Detection
 
@@ -44,6 +61,8 @@ Runtime settings are in `config.json`.
 - Multi-file selections are not fully handled.
 - Drag-and-drop uploads are not detected.
 - Selecting a file in the dialog can be flagged even if upload is never completed.
-- Origin detection relies on Zone.Identifier (Mark-of-the-Web); metadata can be missing after copy/move operations.
+- Origin detection relies on Zone.Identifier (Mark-of-the-Web); metadata can be missing after copy/move/save-as operations or if metadata was stripped.
 - Google Drive classification is hostname-oriented but still heuristic in malformed URL edge cases.
 - Upload dialog detection is based on window-title matching.
+- Dialog parsing depends on standard Windows control hierarchies and may be brittle across UI or locale differences.
+
