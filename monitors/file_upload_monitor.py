@@ -23,7 +23,7 @@ class FileUploadMonitor:
         self._event_proc_keyword = None  # Prevents GC of the callback
         self.is_active = False
 
-    def _is_target_process(self, hwnd):
+    def _get_process_exe_name(self, hwnd):
         try:
             _, pid = win32process.GetWindowThreadProcessId(hwnd)
             handle = ctypes.windll.kernel32.OpenProcess(
@@ -32,16 +32,57 @@ class FileUploadMonitor:
                 pid,
             )
             if not handle:
-                return False
+                return ""
 
             exe_name = ctypes.create_unicode_buffer(260)
             ctypes.windll.psapi.GetModuleFileNameExW(handle, 0, exe_name, 260)
             ctypes.windll.kernel32.CloseHandle(handle)
+            return exe_name.value.lower()
+        except Exception:
+            return ""
 
-            target_proc = app_config.get("monitors.target_process", "chrome.exe")
-            return target_proc in exe_name.value.lower()
+    def _is_target_process(self, hwnd):
+        target_proc = app_config.get("monitors.target_process", "chrome.exe")
+        exe_name = self._get_process_exe_name(hwnd)
+        return bool(exe_name) and target_proc in exe_name
+
+    def _is_chatgpt_window_title(self, hwnd):
+        try:
+            title = win32gui.GetWindowText(hwnd).lower()
+            target_title = app_config.get("monitors.target_window_title", "chatgpt").lower()
+            return target_title in title
         except Exception:
             return False
+
+    def _is_chatgpt_context(self, dialog_hwnd):
+        """Check whether this dialog belongs to a ChatGPT tab in Chrome."""
+        candidate_hwnds = []
+
+        # Owner window is usually the browser window that launched the dialog
+        owner = ctypes.windll.user32.GetWindow(dialog_hwnd, win32con.GW_OWNER)
+        if owner:
+            candidate_hwnds.append(owner)
+
+        # Root owner is a useful fallback for nested ownership chains
+        root_owner = ctypes.windll.user32.GetAncestor(dialog_hwnd, 3)  # GA_ROOTOWNER
+        if root_owner:
+            candidate_hwnds.append(root_owner)
+
+        # Foreground check helps when owner metadata is unavailable
+        foreground = win32gui.GetForegroundWindow()
+        if foreground:
+            candidate_hwnds.append(foreground)
+
+        seen = set()
+        for hwnd in candidate_hwnds:
+            if hwnd in seen:
+                continue
+            seen.add(hwnd)
+
+            if self._is_target_process(hwnd) and self._is_chatgpt_window_title(hwnd):
+                return True
+
+        return False
 
     def _resolve_virtual_path(self, folder_nickname):
         """Maps Shell 'Nicknames' (Downloads, Desktop) to physical NTFS paths."""
@@ -131,7 +172,7 @@ class FileUploadMonitor:
         if event == EVENT_OBJECT_CREATE:
             try:
                 if win32gui.GetClassName(hwnd) == "#32770":
-                    if self._is_target_process(hwnd):
+                    if self._is_target_process(hwnd) and self._is_chatgpt_context(hwnd):
                         # Spawn watcher so the Main Hook thread stays responsive
                         threading.Thread(
                             target=self._watch_dialog_lifecycle, 
