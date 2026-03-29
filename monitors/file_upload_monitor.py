@@ -4,12 +4,14 @@ import ctypes
 import threading
 import win32gui
 import win32con
+import win32process
 from ctypes import wintypes
 from win32com.shell import shell, shellcon
 
 # Internal Imports
 from scanners.file_origin_scanner import is_google_drive_file
 from utils.logger import agent_logger
+from utils.config_loader import app_config
 
 # Win32 Constants
 EVENT_OBJECT_CREATE = 0x8000
@@ -20,6 +22,26 @@ class FileUploadMonitor:
         self._event_hook = None
         self._event_proc_keyword = None  # Prevents GC of the callback
         self.is_active = False
+
+    def _is_target_process(self, hwnd):
+        try:
+            _, pid = win32process.GetWindowThreadProcessId(hwnd)
+            handle = ctypes.windll.kernel32.OpenProcess(
+                win32con.PROCESS_QUERY_INFORMATION | win32con.PROCESS_VM_READ,
+                False,
+                pid,
+            )
+            if not handle:
+                return False
+
+            exe_name = ctypes.create_unicode_buffer(260)
+            ctypes.windll.psapi.GetModuleFileNameExW(handle, 0, exe_name, 260)
+            ctypes.windll.kernel32.CloseHandle(handle)
+
+            target_proc = app_config.get("monitors.target_process", "chrome.exe")
+            return target_proc in exe_name.value.lower()
+        except Exception:
+            return False
 
     def _resolve_virtual_path(self, folder_nickname):
         """Maps Shell 'Nicknames' (Downloads, Desktop) to physical NTFS paths."""
@@ -109,8 +131,7 @@ class FileUploadMonitor:
         if event == EVENT_OBJECT_CREATE:
             try:
                 if win32gui.GetClassName(hwnd) == "#32770":
-                    title = win32gui.GetWindowText(hwnd).lower()
-                    if "open" in title:
+                    if self._is_target_process(hwnd):
                         # Spawn watcher so the Main Hook thread stays responsive
                         threading.Thread(
                             target=self._watch_dialog_lifecycle, 

@@ -42,15 +42,28 @@ class Logger:
         while True:
             try:
                 record = self.log_queue.get()
-                if record is None: break # Shutdown signal
+                if record is None:
+                    self.log_queue.task_done()
+                    break # Shutdown signal
                 self.logger.info(record)
                 self.log_queue.task_done()
-            except Exception:
-                pass
+            except Exception as e:
+                print(f"[!] Logger worker error: {e}")
 
     def log(self, message):
         """Thread-safe way to submit a log without blocking the caller."""
         self.log_queue.put(message)
+
+    def shutdown(self, timeout=2.0):
+        """Flush queued records and stop the writer thread gracefully."""
+        if getattr(self, "worker", None) and self.worker.is_alive():
+            self.log_queue.put(None)
+            self.worker.join(timeout=timeout)
+
+        for handler in self.logger.handlers:
+            handler.flush()
+            handler.close()
+        self.logger.handlers.clear()
 
 # Global singleton instance
 agent_logger = Logger()

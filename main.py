@@ -1,4 +1,3 @@
-import os
 import sys
 import win32api
 
@@ -6,6 +5,7 @@ from monitors.base import Win32MessageWindow
 from monitors.paste_monitor import start_paste_monitor, stop_paste_monitor
 from monitors.file_upload_monitor import start_file_upload_monitor, stop_file_upload_monitor
 from utils import console_handler
+from utils.logger import agent_logger
 
 if __name__ == "__main__":
     # Register the native Windows control handler for graceful exit
@@ -41,7 +41,6 @@ if __name__ == "__main__":
         
         stop_paste_monitor()
         stop_file_upload_monitor()
+        agent_logger.shutdown()
         
         print("[+] Cleanup complete. Agent terminated.")
-        
-        os._exit(0)

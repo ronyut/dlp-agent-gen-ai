@@ -1,5 +1,6 @@
 import configparser
 import os
+from urllib.parse import urlparse
 from utils.config_loader import app_config
 
 def get_file_origin(filepath):
@@ -25,5 +26,18 @@ def get_file_origin(filepath):
         print(f"Error reading ADS: {e}")
         return None
 
+
 def is_google_drive_file(file_path):
-    return app_config.get("monitors.google_drive_origin") in get_file_origin(file_path)
+    host_url = get_file_origin(file_path)
+    if not host_url:
+        return False
+
+    token = app_config.get("monitors.google_drive_origin", "googleusercontent.com")
+    parsed = urlparse(host_url)
+    hostname = (parsed.hostname or "").lower()
+
+    if hostname:
+        return hostname == token or hostname.endswith(f".{token}")
+
+    # Fallback for malformed URLs where hostname cannot be parsed
+    return token in host_url.lower()
