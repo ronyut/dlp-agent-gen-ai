@@ -1,0 +1,10 @@
+{
+    "monitors": {
+        "target_process": "chrome.exe",
+        "target_window_title": "ChatGPT",
+        "scan_delay_ms": 10
+    },
+    "logging": {
+        "log_file": "alerts.log"
+    }
+}
