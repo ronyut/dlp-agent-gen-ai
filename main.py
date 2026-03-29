@@ -1,13 +1,16 @@
 import sys
+import threading
 import win32api
 
 from monitors.base import Win32MessageWindow
 from monitors.paste_monitor import start_paste_monitor, stop_paste_monitor
 from monitors.file_upload_monitor import start_file_upload_monitor, stop_file_upload_monitor
-from utils import console_handler
+from utils import console_handler, set_main_thread_id
 from utils.logger import agent_logger
 
 if __name__ == "__main__":
+    set_main_thread_id(threading.get_ident())
+
     # Register the native Windows control handler for graceful exit
     win32api.SetConsoleCtrlHandler(console_handler, True)
 

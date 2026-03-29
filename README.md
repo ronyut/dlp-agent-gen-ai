@@ -17,7 +17,7 @@ Windows endpoint monitoring prototype that detects potential data leakage to Gen
 python -m venv venv
 venv\Scripts\activate
 python -m pip install --upgrade pip
-python -m pip install pywin32
+python -m pip install -r requirements.txt
 ```
 
 ## Run
@@ -26,20 +26,9 @@ python -m pip install pywin32
 python main.py
 ```
 
-Expected startup behavior:
-
-- Registers keyboard and WinEvent hooks
-- Starts the Win32 message loop
-- Prints active monitoring status to console
-
 ## Configuration
 
-Runtime settings are in config.json:
-
-- monitors.target_process
-- monitors.target_window_title
-- monitors.google_drive_origin
-- logging.log_file
+Runtime settings are in `config.json`.
 
 ## Limitations
 
@@ -57,3 +46,4 @@ Runtime settings are in config.json:
 - Selecting a file in the dialog can be flagged even if upload is never completed.
 - Origin detection relies on Zone.Identifier (Mark-of-the-Web); metadata can be missing after copy/move operations.
 - Google Drive classification is hostname-oriented but still heuristic in malformed URL edge cases.
+- Upload dialog detection is based on window-title matching.
