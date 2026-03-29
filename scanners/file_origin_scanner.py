@@ -26,4 +26,4 @@ def get_file_origin(filepath):
         return None
 
 def is_google_drive_file(file_path):
-    return app_config.get("monitors.google_drive_url") in get_file_origin(file_path)
+    return app_config.get("monitors.google_drive_origin") in get_file_origin(file_path)

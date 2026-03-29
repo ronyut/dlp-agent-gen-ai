@@ -2,8 +2,7 @@
     "monitors": {
         "target_process": "chrome.exe",
         "target_window_title": "ChatGPT",
-        "scan_delay_ms": 10,
-        "google_drive_url": "googleusercontent.com"
+        "google_drive_origin": "googleusercontent.com"
     },
     "logging": {
         "log_file": "alerts.log"
