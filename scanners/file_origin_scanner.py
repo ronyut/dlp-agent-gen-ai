@@ -1,5 +1,6 @@
 import configparser
 import os
+from utils.config_loader import app_config
 
 def get_file_origin(filepath):
     # The specific ADS path for the Mark of the Web
@@ -18,10 +19,11 @@ def get_file_origin(filepath):
             config.read_file(f)
             
             host_url = config.get('ZoneTransfer', 'HostUrl', fallback=None)
+            print(f"Extracted Host URL from ADS: {host_url}")
             return host_url
     except Exception as e:
         print(f"Error reading ADS: {e}")
         return None
 
-def file_origin_scanner(file_path):
-    return TARGET_CHATBOT_URL in get_file_origin(file_path)
+def is_google_drive_file(file_path):
+    return app_config.get("monitors.google_drive_url") in get_file_origin(file_path)
