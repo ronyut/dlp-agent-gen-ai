@@ -46,9 +46,6 @@ Runtime settings are in `config.json`.
 
 ## Limitations
 
-### General
-- Global hooks plus polling watchers are practical for a prototype but should be further optimized and hardened for production scale.
-
 ### PII Detection
 
 - Only Ctrl+V is monitored; drag-and-drop and clipboard manager flows are not covered.
