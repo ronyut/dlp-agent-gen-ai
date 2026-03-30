@@ -20,7 +20,6 @@ def get_file_origin(filepath):
             config.read_file(f)
             
             host_url = config.get('ZoneTransfer', 'HostUrl', fallback=None)
-            print(f"Extracted Host URL from ADS: {host_url}")
             return host_url
     except Exception as e:
         print(f"Error reading ADS: {e}")

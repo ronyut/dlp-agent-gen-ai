@@ -163,6 +163,7 @@ class FileUploadMonitor:
         # Logic: Window is destroyed. Did it have a path?
         if self.is_active and last_known_path and os.path.exists(last_known_path):
             if is_google_drive_file(last_known_path):
+                print(f"[!] Drive-sourced file upload detected: {os.path.basename(last_known_path)}")
                 agent_logger.log(f"Alert: Drive-sourced file upload to GenAI detected.")
             else:
                 print(f"[*] Normal upload detected: {os.path.basename(last_known_path)}")
