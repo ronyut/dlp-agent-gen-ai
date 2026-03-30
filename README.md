@@ -61,5 +61,5 @@ Runtime settings are in `config.json`.
 - Origin detection relies on Zone.Identifier (Mark-of-the-Web); metadata can be missing after copy/move/save-as operations or if metadata was stripped.
 - Google Drive classification is hostname-oriented but still heuristic in malformed URL edge cases.
 - Upload dialog detection is based on window-title matching.
-- Dialog parsing depends on standard Windows control hierarchies and may be brittle across UI or locale differences.
+- Upload dialog parsing relies on standard Windows UI hierarchies, making it susceptible to failure across different locales or OS versions. Additionally, the parser only supports common folder nicknames (e.g., Desktop, Downloads); navigating to other localized or virtual folders may fail to resolve the absolute path required for origin checking.
 
